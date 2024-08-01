@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-s3fs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuntu-s3fs
+  template:
+    metadata:
+      labels:
+        app: ubuntu-s3fs
+    spec:
+      containers:
+        - name: ubuntu-s3fs
+          image: <your-dockerhub-username>/ubuntu-s3fs:latest
+          command: ["/bin/bash", "-c", "--"]
+          args:
+            - "tail -f /dev/null"
+          volumeMounts:
+            - name: passwd-s3fs
+              mountPath: /root/.passwd-s3fs
+            - name: s3fs-mount
+              mountPath: /mnt/minio
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+      volumes:
+        - name: passwd-s3fs
+          hostPath:
+            path: /path/to/passwd-s3fs
+        - name: s3fs-mount
+          emptyDir: {}

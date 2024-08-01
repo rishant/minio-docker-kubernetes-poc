@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-volume
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuntu-volume
+  template:
+    metadata:
+      labels:
+        app: ubuntu-volume
+    spec:
+      containers:
+        - name: ubuntu-volume
+          image: ubuntu:latest
+          command: ["/bin/bash", "-c", "--"]
+          args:
+            - "tail -f /dev/null"
+          volumeMounts:
+            - name: minio-data
+              mountPath: /mnt/minio
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+      volumes:
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: minio-pvc
