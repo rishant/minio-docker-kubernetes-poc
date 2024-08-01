@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+    command: server /data
+
+  ubuntu_s3fs:
+    image: ubuntu:latest
+    container_name: ubuntu_s3fs
+    depends_on:
+      - minio
+    volumes:
+      - type: bind
+        source: ./passwd-s3fs
+        target: /root/.passwd-s3fs
+      - s3fs_mount:/mnt/minio
+    entrypoint: ["/bin/bash", "-c", "--"]
+    command: |
+      apt-get update &&
+      apt-get install -y s3fs &&
+      echo "minioadmin:minioadmin" > /root/.passwd-s3fs &&
+      chmod 600 /root/.passwd-s3fs &&
+      s3fs mybucket /mnt/minio -o passwd_file=/root/.passwd-s3fs -o url=http://minio:9000 -o use_path_request_style &&
+      tail -f /dev/null
+
+  ubuntu_volume:
+    image: ubuntu:latest
+    container_name: ubuntu_volume
+    depends_on:
+      - minio
+    volumes:
+      - minio_data:/mnt/minio
+
+volumes:
+  minio_data:
+  s3fs_mount:
